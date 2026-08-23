@@ -20,7 +20,7 @@ The proposal has four cost regimes, deliberately separated by the workflow split
 |---|---|---|---|
 | **Full-System Scan** | Initial setup on an existing project; on-demand full re-scan | Workflow 1 | `O(N × M × C × T / P)` — high, one-time or rare |
 | **Single-Component Scan** | New component creation (via W6); revalidation trigger (via CI); on-demand re-validation or re-scan | Workflow 2 | `O(M × C × T / P)` — medium, per-component (no outer loop; automatic MD replacement adds no cost) |
-| **Edit Component Loop** | Agent edits an existing component | Workflow 5 (verify loop only — W5 has no relation to W2 and invokes no scan) | `O(R × |Affects(X)| × T / P)` — low, per-edit |
+| **Edit Component Loop** | Agent edits an existing component | Workflow 5 (verify loop only — W5 has no relation to W2 and can invoke W4 )| `O(R × |Affects(X)| × T / P)` — low, per-edit |
 | **Create New Component** | Agent creates a new component | Workflow 6 | `O(codegen) + O(M × C × T / P)` (the Workflow 2 cost) |
 
 Reverse Sync (Workflow 4) is essentially free in tokens (pure file I/O, no LLM calls) but is no longer `O(E)` — it is now `O(N² × L)` file reads because W4 always runs as a full nested loop over every MD file, plus one hash-stamping pass that writes `last_validated` into every file. It is included in the cost model in §4 below. At typical project sizes (N ≤ 2000) the wall-time cost is seconds-to-minutes, which is negligible next to the LLM-driven workflows.
@@ -187,7 +187,7 @@ The cost trade-off is favorable: at any project size where W4 is non-trivial (N 
 
 ## 5. Edit Component Loop cost (Workflow 5)
 
-W5 has **one cost component**: the verify loop (the per-retry W3 fan-out with cancel-on-first-failure). Workflow 5 has no relation to Workflow 2 — it never invokes it, so no scan cost is attached to an edit. Doc refresh after an edit is deferred to the CI staleness check, which triggers Workflow 2 on its own path (§3.3) only when the hash comparison actually shows the doc is outdated.
+W5 has **one cost component**: the verify loop (the per-retry W3 fan-out with cancel-on-first-failure). Workflow 5 has no relation to Workflow 2 — it can invoke W4 .
 
 ### 5.1 Verify-loop wall-time cost
 
@@ -233,7 +233,7 @@ Per edit attempt: `|Affects(X)| × per_sub_agent_token_cost / P + per_attempt_ov
 
 ### 5.3 No post-edit scan cost
 
-Unlike a design where the edit loop also triggers a single-component scan after every safe edit, W5 attaches **zero** scan cost to an edit: it invokes neither Workflow 2 nor Workflow 4. Doc refresh is deferred to the CI staleness check, which triggers Workflow 2 only when the hash comparison (the hash in the MD vs. the latest commit on the owning component or its `Affects` / `Affected By` components) actually shows the doc is outdated. The result is that quiet periods with no related commits produce no revalidation cost, while a related change anywhere in the validation group is still caught within the check's schedule.
+Unlike a design where the edit loop also triggers a single-component scan after every safe edit, W5 attaches **zero** scan cost to an edit: it never invoke workflow 2 and it can Workflow 4.
 
 ### 5.4 Frequency-driven total cost
 
@@ -371,7 +371,7 @@ For a **mature, 500-component codebase with cross-cutting changes**:
 | Overall AI-assisted maintenance productivity | +25 to +45% | +20 to +45% (lower bound reflects AI test-selection risk) | Low-medium |
 | One-time full-system scan cost | ~12.5M tokens, ~1.6 hours wall time (8-way parallel) | ~110M tokens, ~43 hours wall time (8-way parallel) — higher because per-candidate AI calls dominate. Unchanged from earlier form of this proposal. | High (arithmetic) |
 | Per-event single-component scan cost (new component via W6, or CI revalidation) | ~25–50k tokens, ~4 minutes wall time | ~150–300k tokens, ~4 minutes wall time — higher per event than V1, but no nightly test-inventory refresh cost. The same cost applies whether W2 creates a new MD or automatically replaces an existing one — there is one algorithm, no modes. | High (arithmetic) |
-| Per-edit W5 cost (verify loop only) | ~30k tokens, ~15s wall time | ~15–150k tokens, ~5s–2 minutes wall time — W5 never invokes W2, so no scan cost is attached to an edit; doc refresh is deferred to the CI staleness check (hash comparison), which triggers W2 only when a related component actually changed. | High (arithmetic) |
+| Per-edit W5 cost | ~30k tokens, ~15s wall time | ~15–150k tokens, ~5s–2 minutes wall time — W5 never invokes W2, but can invoke W4. | High (arithmetic) |
 | W4 cost per invocation | `O(E)` file reads, milliseconds, 0 tokens | `O(N² × L)` file reads + one hash-stamping write pass, seconds-to-minutes, 0 tokens. Higher in wall time, but still negligible next to LLM-driven workflows. The trade is drift-proofing: every `Affected By:` list is re-derived from scratch and every file's validation hash re-stamped every time. | High (arithmetic) |
 
 For a **small or clean codebase**, expect single-digit improvements at best, and possible net-negative if the doc overhead exceeds the gains. The proposal's value proposition scales with project size and component interconnection.
