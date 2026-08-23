@@ -600,7 +600,7 @@ The agent has an edit prompt — a natural-language description of the intended 
 7. **If ALL Y report `verdict=not_affected`** → the edit is safe:
    - Commits the edited file (no restore).
 8. Returns success or failure + a per-retry summary.
-   (Workflow 5 has **no relation to Workflow 2** — it never invokes it, not even after a safe edit. Doc refresh after edits is left to the staleness check, which triggers Workflow 2 on its own path; W5 itself never does.)
+   (Workflow 5 has **no relation to Workflow 2** — it can invoke W4.)
 
 The critical design choice is the **cancel-on-first-failure** semantics. As soon as ANY sub-agent reports `affected`, the orchestrator cancels the remaining sub-agents and restores the original. This is the opposite of waiting for all sub-agents to complete before deciding. The rationale: a single `affected` verdict is sufficient evidence that the edit is unsafe; continuing to spend tokens on the remaining sub-agents is wasted budget. Restoring immediately minimizes the window during which the codebase is in an unsafe state.
 
