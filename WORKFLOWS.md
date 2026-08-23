@@ -504,7 +504,7 @@ Workflow 4 is the bookkeeping step that keeps both directions consistent. It run
 
 - Path to the project's `COMPONENT_<name>.md` files (project root or docs directory).
 - Read/write access to every `COMPONENT_<name>.md` file in the project.
-- The validation commit `C` — the git commit at which the invoking workflow (W1, W2, or W6-via-W2) ran. W4 stamps `C` into every component's MD file as `last_validated`.
+- The validation commit `C` — the git commit at which the invoking workflow (W1, W2, ,W6-via-W2 or (can be ) W5) ran. W4 stamps `C` into every component's MD file as `last_validated`.
 - No edge-diff argument and no separate graph artifact — the algorithm is always the same full nested loop regardless of which workflow invoked it.
 
 ### 4.4 Outputs
