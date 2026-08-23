@@ -1,0 +1,114 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/Fady1Hany/A-proposal-for-a-per-component-documentation-layer-V2-workflow-based-/schema/COMPONENT_NAME.schema.json",
+  "title": "COMPONENT_<name>.md (structured representation)",
+  "description": "JSON Schema for the structured representation of a COMPONENT_<name>.md file as defined in SPEC.md. The on-disk format is Markdown-first; tooling may parse it into this structured form for validation and CI checks. Key ownership rules encoded here: `affected_by` and `last_validated` are produced exclusively by Workflow 4; `affects` is produced by Workflow 1/2 from Workflow 3 verdicts; no test names are stored anywhere in the doc.",
+  "type": "object",
+  "required": ["component", "location", "last_validated", "affects", "affected_by", "provenance"],
+  "additionalProperties": false,
+  "properties": {
+    "component": {
+      "type": "string",
+      "description": "The component's name as it appears in code. MUST match the <name> in the filename."
+    },
+    "location": {
+      "type": ["string", "array"],
+      "items": { "type": "string" },
+      "minItems": 1,
+      "description": "File path (relative to repo root) of the component's primary source file. May be an array of paths if the component spans multiple files."
+    },
+    "last_validated": {
+      "type": "object",
+      "description": "The validation hash. This is the freshness contract: the git commit at which the doc's relationships were last confirmed. Written EXCLUSIVELY by Workflow 4 (the sole canonical producer of this field). A human cannot bump it without running a workflow.",
+      "required": ["commit", "date"],
+      "additionalProperties": false,
+      "properties": {
+        "commit": {
+          "type": "string",
+          "description": "The git commit hash (full or short) at which the doc was last validated — stamped by Workflow 4."
+        },
+        "date": {
+          "type": "string",
+          "format": "date",
+          "description": "ISO-8601 date of the Workflow 4 run that stamped the hash."
+        }
+      }
+    },
+    "affects": {
+      "type": "array",
+      "items": { "type": "string" },
+      "uniqueItems": true,
+      "description": "Component names only. The components whose behavior was observed to change when this component was mutated. Populated by Workflow 1 / Workflow 2 from Workflow 3 verdicts. When Workflow 2 scans a component that already has an MD, this list is fully replaced (automatic replacement; previous version preserved in git history)."
+    },
+    "affected_by": {
+      "type": "array",
+      "items": { "type": "string" },
+      "uniqueItems": true,
+      "description": "Component names only. The components whose modification was observed to affect this component. Produced exclusively by Workflow 4, which rebuilds it from scratch on every run by scanning every other MD file's Affects list."
+    },
+    "provenance": {
+      "type": "object",
+      "description": "Workflow metadata for debugging and cost tracking. Not consumed by the agent during normal operation.",
+      "additionalProperties": true,
+      "properties": {
+        "workflow_id": {
+          "type": "integer",
+          "enum": [1, 2, 3, 4, 5, 6],
+          "description": "The workflow that last produced or updated this doc."
+        },
+        "commit": {
+          "type": "string",
+          "description": "The git commit the producing workflow ran at."
+        },
+        "operators": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Mutation operator IDs used by the producing scan (e.g. RETURN_VALUE_CORRUPTION, BEHAVIOR_SWAP)."
+        },
+        "replaced_existing_md": {
+          "type": "boolean",
+          "description": "Workflow 2 only: whether this scan automatically replaced an existing COMPONENT_<NAME>.md (true) or created a new one (false)."
+        },
+        "tokens": {
+          "type": "integer",
+          "description": "Approximate token cost of the producing run."
+        },
+        "sub_agent_fan_out": {
+          "type": "integer",
+          "description": "Sub-agent fan-out factor used in the producing scan."
+        },
+        "human_edits": {
+          "type": "array",
+          "description": "Machine-readable record of post-workflow human edits (the same information as the [human-edited] HTML comments in the doc body). Human edits never update last_validated.",
+          "items": {
+            "type": "object",
+            "required": ["date", "reason"],
+            "properties": {
+              "date": { "type": "string", "format": "date" },
+              "reason": { "type": "string" }
+            }
+          }
+        }
+      }
+    },
+    "public_interface": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Optional. Exported symbols considered stable; changes to these are breaking."
+    },
+    "stability": {
+      "type": "string",
+      "enum": ["experimental", "stable", "frozen", "deprecated"],
+      "description": "Optional. Inferred by the workflow from annotations, test coverage, and Affected By breadth."
+    },
+    "notes": {
+      "type": "string",
+      "description": "Optional. Free-form context that does not fit elsewhere; use sparingly."
+    },
+    "spec_version": {
+      "type": "string",
+      "pattern": "^v\\d+\\.\\d+$",
+      "description": "Optional. If present, MUST match the major.minor version of SPEC.md."
+    }
+  }
+}
