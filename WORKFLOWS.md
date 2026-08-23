@@ -678,7 +678,7 @@ STEPS:
               4.7.2  COMMIT the edited file (no restore).
               4.7.3  RETURN verdict=safe, retry_count=retry_idx+1,
                      per-Y report.
-              (Workflow 5 invokes neither Workflow 2 nor Workflow 4.)
+              (Workflow 5 can invoke Workflow 4.)
 
   5. IF max_retries R exhausted without a safe edit:
        5.1  RESTORE PATH from .edit/originals/<NAME>.bak.<timestamp>
