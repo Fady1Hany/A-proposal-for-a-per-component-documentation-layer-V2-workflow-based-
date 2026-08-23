@@ -74,7 +74,7 @@ flowchart LR
     C --> D[Affects Discovered]
     D --> E[W4: Reverse Sync + hash stamping<br/>always full nested loop over all MD files]
     E --> F[Steady State]
-    F -.agent edits X.-> W5[W5: Edit Component Loop<br/>verify via W3 and W4 ( optional )]
+    F -.agent edits X.-> W5[W5: Edit Component Loop<br/>verify via W3 and W4 - optional]
     W5 -.re-verifies against.-> C
     W5 -.safe edit applied.-> F
     F -.related change.-> B2[W2: Single-Component Scan<br/>mutate + test all, replace MD]
