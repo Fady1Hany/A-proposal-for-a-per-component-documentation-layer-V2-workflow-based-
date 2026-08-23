@@ -90,7 +90,8 @@ All optional fields are also workflow-produced. They may be omitted if the workf
    - Workflow 3 (AI-Driven Testing): invoked by Workflows 1, 2, and 5 as a sub-step; may also be invoked on demand for ad-hoc impact analysis.
    - Workflow 4 (Reverse Relationship Sync): invoked by Workflows 1, 2,  6 and 5 ( also can ) after they complete — always the same full nested loop over every MD afters in the project, no diff input. Workflow 4 also stamps the validation hash (`last_validated`) into the MD file of every component; it is the sole writer of that field
      
-   - Workflow 5 (Edit Component Loop): invoked by the orchestration layer whenever the agent modifies an existing component; may also be invoked on demand for edit verification. Workflow 5 has **no relation to Workflow 2** — it never invokes it; it only reads the Affects list and verifies the edit via Workflow 3. Doc refresh after an edit is left to the staleness check.
+   - Workflow 5 (Edit Component Loop): invoked by the orchestration layer whenever the agent modifies an existing component; may also be invoked on demand for edit verification. Workflow 5 has **no relation to Workflow 2** — it never invokes it; it only reads the Affects list and verifies the edit via Workflow 3. W5 can invoke W4
+     
    - Workflow 6 (Create New Component): invoked by the orchestration layer whenever the agent creates a new component; may also be invoked on demand for one-shot new-component bootstrap. W6 invokes Workflow 2 on the new component (no MD exists under its name yet, so W2 creates one), and W2 triggers Workflow 4.
 7. **CI checks** (see §7) verify that `last_validated` is consistent with the validation group (the union of `Affects` and `Affected By`). They do not enforce a time threshold.
 
