@@ -498,9 +498,9 @@ Once Workflow 1 or Workflow 2 has written `Affects:` entries into a component's 
 
 The two sections represent the same relationship from different perspectives. If `X affects A`, then logically `A is affected by X`. Both pieces of information are useful. If only `Affects` were stored, the system would have to scan the entire project to determine which components affect a particular component. With both directions available, the relationships stored in the COMPONENT_*.md files are immediately readable from either side.
 
-Workflow 4 is the bookkeeping step that keeps both directions consistent. It runs after Workflow 1 completes, after Workflow 2 completes, and after Workflow 6 completes (via the W2 it invokes) — always the same full nested loop over every MD file in the project, plus the hash-stamping pass. Workflow 5 never invokes Workflow 4 (W5 has no relation to Workflow 2 and refreshes no docs; doc refresh after an edit is left to the staleness check).
+Workflow 4 is the bookkeeping step that keeps both directions consistent. It runs after Workflow 1 completes, after Workflow 2 completes, and after Workflow 6 completes (via the W2 it invokes) — always the same full nested loop over every MD file in the project, plus the hash-stamping pass. Workflow 5 can invoke Workflow 4 
 
-### 4.3 Inputs
+## 4.3 Inputs
 
 - Path to the project's `COMPONENT_<name>.md` files (project root or docs directory).
 - Read/write access to every `COMPONENT_<name>.md` file in the project.
@@ -574,7 +574,7 @@ STEPS:
 - After Workflow 6 completes (via the W2 it invokes).
 - On demand — if a developer manually edits an `Affects` section and wants the reverse direction propagated and the hashes re-stamped, they can invoke Workflow 4 explicitly. (This is not the normal flow; the normal flow is Workflow 2 followed by Workflow 4.)
 
-Workflow 5 never invokes Workflow 4 — W5 has no relation to Workflow 2, and doc refresh after an edit is deferred to the staleness check, which triggers Workflow 2 on its own path.
+Workflow 5 can invoke workflow 4 — W5 has no relation to Workflow 2
 
 ## 5. Workflow 5 — Edit Component Loop
 
@@ -881,7 +881,7 @@ flowchart TB
 - Workflow 1 invokes Workflow 3 (via sub-agents) for each (component, mutation, candidate) triple.
 - Workflow 1 invokes Workflow 4 (always the full nested loop over every MD file, plus the hash-stamping pass) after the scan completes.
 - Workflow 2 mutates the target component, invokes Workflow 3 (via sub-agents) for every other component in the inventory, writes / automatically replaces the Affects list in COMPONENT_<NAME>.md, and invokes Workflow 4 (full nested loop + hash stamping) after the scan completes.
-- Workflow 5 invokes Workflow 3 (via sub-agents) for each (target component, edit attempt, Affects-list entry) triple. Cancel-on-first-failure semantics: as soon as any sub-agent reports `affected`, the remaining sub-agents are cancelled, the source is restored, and the next retry begins. Workflow 5 invokes neither Workflow 2 nor Workflow 4 — it has no relation to Workflow 2.
+- Workflow 5 invokes Workflow 3 (via sub-agents) for each (target component, edit attempt, Affects-list entry) triple. Cancel-on-first-failure semantics: as soon as any sub-agent reports `affected`, the remaining sub-agents are cancelled, the source is restored, and the next retry begins. Workflow 5 can invoke Workflow 4 — W5 has no relation to Workflow 2.
 - Workflow 6 invokes Workflow 2 after writing the new component's source. W2 internally invokes Workflow 4.
 - The CI staleness check (see [`SPEC.md` §7](./SPEC.md)) triggers Workflow 2 (with the path to the component's MD) on detected staleness.
 - Workflow 3 may also be invoked on demand for ad-hoc impact analysis, without running Workflow 1, 2, or 5.
