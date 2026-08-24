@@ -100,7 +100,7 @@ Optional operators (language-specific):
 
 Operator selection: for a component with K public symbols, the workflow SHOULD apply one operator per public symbol (default: `RETURN_VALUE_CORRUPTION`, which produces the cleanest runtime signal). Applying all operators to all symbols is `O(K × 4)` mutations; for most components, K is 1–5, so the total mutations are 4–20, which is manageable. The workflow SHOULD prefer runtime-affecting operators (`RETURN_VALUE_CORRUPTION`, `BEHAVIOR_SWAP`) over compile-affecting ones (`SIGNATURE_CHANGE`, `REMOVAL`) when the goal is impact discovery rather than breakage testing, because compile errors stop the test suite before downstream tests run and mask the impact signal.
 
- The workflow can also be implemented by delegating operator selection to the agent, allowing the agent to select the appropriate mutation operator on the fly based on the target component (but this is exception ) .
+ The workflow ( W1 or W2 ) can also be implemented by delegating operator selection to the agent, allowing the agent to select the appropriate mutation operator on the fly based on the target component (but this is exception ) .
  
 ## By default, the set must contain at least one operator.
 
@@ -437,6 +437,9 @@ Workflow 3 receives a single testing task. It inspects the component-under-test,
 The AI then executes the selected tests (or dispatches them to the project's test runner), observes the results, and returns a verdict: **affected** (one or more selected tests newly failed, or behavior changed in a way the AI can substantiate) or **not affected** (no selected tests newly failed, and no behavior change the AI can substantiate). The verdict is accompanied by evidence: which tests ran, which passed, which failed, and a brief justification of why those tests were selected.
 
 The important idea is that **the AI determines the appropriate tests dynamically**. The system therefore does not need to maintain a static list of test names inside every component's Markdown file. The AI's current capabilities are expected to allow it to determine the relevant tests for a component regardless of whether the component is small or large.
+
+
+The workflow (W3) can also be implemented by running static tests for testing the component_under_test. These tests are documented in `Component_component_under_test.md` under the `notes` section; however, this is an exception.
 
 ### 3.3 Inputs
 
