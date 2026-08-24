@@ -100,6 +100,8 @@ Optional operators (language-specific):
 
 Operator selection: for a component with K public symbols, the workflow SHOULD apply one operator per public symbol (default: `RETURN_VALUE_CORRUPTION`, which produces the cleanest runtime signal). Applying all operators to all symbols is `O(K × 4)` mutations; for most components, K is 1–5, so the total mutations are 4–20, which is manageable. The workflow SHOULD prefer runtime-affecting operators (`RETURN_VALUE_CORRUPTION`, `BEHAVIOR_SWAP`) over compile-affecting ones (`SIGNATURE_CHANGE`, `REMOVAL`) when the goal is impact discovery rather than breakage testing, because compile errors stop the test suite before downstream tests run and mask the impact signal.
 
+( you can create an empty set and let the agent of testing do whatever he wants. this is an implementation choice )
+
 ### 1.6 Algorithm
 
 ```text
