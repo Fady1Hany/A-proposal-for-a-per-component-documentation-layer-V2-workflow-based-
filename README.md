@@ -62,6 +62,7 @@ What is **not** in the file: a list of test names, a manually authored `depends_
 
 Manual tests are not deleted by this system. Existing hand-authored tests remain part of the project and remain valuable as records of previously discovered bugs, business rules, and regression cases. The system simply does not store their names inside the component Markdown files. The AI in Workflow 3 is free to discover and execute them as part of its dynamic test selection.
 
+
 ## The full lifecycle
 
 The system covers the full documentation lifecycle, end to end. None of these stages are optional — skipping any one breaks the trust model.
@@ -141,6 +142,9 @@ This proposal is that inversion applied to one domain. The author's belief — s
 This is a substantive revision, not a refinement of the prior form. The defining design choices of the prior form — a static test-inventory workflow, curated `targeted_verification` lists, the `depends_on`/`used_by` structural fields — are removed. In their place is a smaller doc format (component names only) and an AI-driven testing workflow that decides dynamically what to test. The trade-off is explicit: the system makes stronger assumptions about the AI's ability to reliably select and execute appropriate tests for a component without a pre-enumerated inventory, and it assumes an AI orchestration layer (Claude Code, Codex, similar) that can dispatch parallel sub-agents and reconcile their results.
 
 The intent of publishing is to invite discussion specifically on the six-workflow structure, the AI-driven testing contract in Workflow 3, the edit-and-verify contract in Workflow 5, and the implications of removing test names from the component doc. If the ideas survive scrutiny, the next step is a pilot: a real 200+ component codebase, instrumented before/after, with full-system scan cost measured directly. See [`COST.md` §"Recommended pilot"](./COST.md) for the measurement plan.
+
+## note
+This repository is a proposal, not a constitution and not a binding spec. What is fixed is the core idea: a unified COMPONENT_<name>.md format, plus the six workflows that produce and consume it. Everything else is intentionally flexible. The notes field in COMPONENT_<name>.md is left open so you can record whatever extra information you want your own workflow implementations to use. While writing this repo we assume Workflow 3 builds tests on the fly — with no ready-made per-component test list — but that is a default, not a rule: you may instead have it run tests you specified yourself, and that exceptional path is documented in  [`WORKFLOWS.md`](./WORKFLOWS.md)  so implementers have room to experiment. The same applies to Workflows 1 and 2: the write-up assumes a fixed set of mutation operators, but  [`WORKFLOWS.md`](./WORKFLOWS.md) also allows the agent to choose those operators on the fly.
 
 ## License
 
