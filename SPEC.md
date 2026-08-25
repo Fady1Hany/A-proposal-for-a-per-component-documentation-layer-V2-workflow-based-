@@ -68,7 +68,7 @@ All optional fields are also workflow-produced. They may be omitted if the workf
 
 - **`public_interface`** — explicit list of exported symbols considered stable. Changes to these are breaking. The workflow identifies these from language-level visibility modifiers (e.g. `public` in Java, `export` in TypeScript, non-`pub(crate)` in Rust) plus convention-based detection (e.g. functions named `init`, `main`, `setup`).
 - **`stability`** — one of `experimental`, `stable`, `frozen`, `deprecated`. The workflow infers this from a combination of: code annotations (`@experimental`, `@deprecated`), test coverage level, and the breadth of `Affected By` (broadly-used components default to `stable`; narrowly-used to `experimental`).
-- **`notes`** — free-form context that does not fit elsewhere. The workflow may populate this with observations from Workflow 3 (e.g. "non-deterministic test `test_session_expiry` was excluded from impact analysis — see provenance"). or you can use this field to write static tests that run when W3 tests this Component and implement W3 to read tests from the `COMPONENT_<name>.md` but this is an exceptional implementation for W3
+- **`notes`** — free-form context that does not fit elsewhere. The workflow may populate this with observations from Workflow 3 (e.g. "non-deterministic test `test_session_expiry` was excluded from impact analysis — see provenance"). or you can use this field to write static tests that run when W3 tests this Component and implement W3 to read tests from the `COMPONENT_<name>.md` but this is **an exceptional implementation for W3** ( these tests cover ( test ) **only** the component W3 wants to test not any components related to this component )
   
 ## - Use this field sparingly.
 
