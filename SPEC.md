@@ -70,7 +70,7 @@ All optional fields are also workflow-produced. They may be omitted if the workf
 - **`stability`** — one of `experimental`, `stable`, `frozen`, `deprecated`. The workflow infers this from a combination of: code annotations (`@experimental`, `@deprecated`), test coverage level, and the breadth of `Affected By` (broadly-used components default to `stable`; narrowly-used to `experimental`).
 - **`notes`** — free-form context that does not fit elsewhere. The workflow may populate this with observations from Workflow 3 (e.g. "non-deterministic test `test_session_expiry` was excluded from impact analysis — see provenance"). or you can use this field to write static tests that run when W3 tests this Component and implement W3 to read tests from the `COMPONENT_<name>.md` but this is **an exceptional implementation for W3**
   
- > if you will use this field to write static tests you can do it **under one condition** : any test in any `COMPONENT_<name>.md` must cover ( test ) **only** the Component whose name  matches the `<name>` part in `COMPONENT_<name>.md` and must not cover any components related to it
+ > if you will use the `notes` field to write static tests you can use it for that **under one condition** : any test in any `COMPONENT_<name>.md` must cover ( test ) **only** the Component whose name  matches the `<name>` part in `COMPONENT_<name>.md` and must not cover any components related to it
   
   
 ## - Use this field sparingly.
