@@ -69,18 +69,28 @@ The system covers the full documentation lifecycle, end to end. None of these st
 
 ```mermaid
 flowchart LR
-    A[Component Creation Prompt] --> W6[W6: Create New Component<br/>invokes W2]
-    W6 --> B[W2: Single-Component Scan<br/>mutate + test all other components]
-    B --> C[W3: AI-Driven Testing]
-    C --> D[Affects Discovered]
-    D --> E[W4: Reverse Sync + hash stamping<br/>always full nested loop over all MD files]
-    E --> F[Steady State]
+    A["Component Creation Prompt"]
+    W6["W6: Create New Component - invokes W2"]
+    B["W2: Single-Component Scan - mutate and test all other components"]
+    C["W3: AI-Driven Testing"]
+    D["Affects Discovered"]
+    E["W4: Reverse Sync and hash stamping - always full nested loop over all MD files"]
+    F["Steady State"]
+    W5["W5: Edit Component Loop - verify via W3 and W4 - optional"]
+    B2["W2: Single-Component Scan - mutate and test all, replace MD"]
 
-    F -.->|agent edits X| W5[W5: Edit Component Loop<br/>verify via W3 and W4 - optional]
-    W5 -.->|re-verifies against| C
-    W5 -.->|safe edit applied| F
+    A --> W6
+    W6 --> B
+    B --> C
+    C --> D
+    D --> E
+    E --> F
 
-    F -.->|related change| B2[W2: Single-Component Scan<br/>mutate + test all, replace MD]
+    F -.-> W5
+    W5 -.-> C
+    W5 -.-> F
+
+    F -.-> B2
     B2 --> E
 ```
 
