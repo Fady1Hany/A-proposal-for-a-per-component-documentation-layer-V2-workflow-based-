@@ -289,7 +289,7 @@ This is the W6-specific analogue of W3's central empirical question: can current
 ### 7.3 Test selection
 - **Estimated improvement:** verification loop time drops 60–90% for changes where Workflow 3's dynamic selection produces accurate verdicts.
 - **Confidence:** Medium (lower than the prior form's Medium-high, because the assumption that AI can reliably select tests is novel and unmeasured).
-- **Reasoning:** The accuracy bar is "does the AI select the right tests" rather than "does the static inventory match the test suite." If the AI's selection is good, the verification loop is faster (only relevant tests run); if it's bad, the loop is longer (re-dispatches to confirm `affected` verdicts). The net is a function of AI quality, which is what a pilot would measure.
+- **Reasoning:** The accuracy bar is "does the AI select the right tests" rather than "does the static test ." If the AI's selection is good, the verification loop is faster (only relevant tests run); if it's bad, the loop is longer (re-dispatches to confirm `affected` verdicts). The net is a function of AI quality, which is what a pilot would measure.
 
 ## 8. Where the gains are small or zero (carried over from the prior form)
 
@@ -318,7 +318,7 @@ This is the W6-specific analogue of W3's central empirical question: can current
 ### 9.1 AI test-selection quality
 - **Risk:** Medium-High (this is the new risk this proposal introduces).
 - **Reason:** for example: If Workflow 3's AI cannot reliably select appropriate tests for a component, the relationships stored in the COMPONENT_*.md files will be incomplete (false negatives — edges missed because no test was selected to catch them) or noisy (false positives — edges recorded because a flaky test happened to fail in a way the AI couldn't distinguish from a real impact).
-- **Mitigation:** Re-dispatch when the first verdict is `affected` (catches some flaky-test false positives); cross-check `affected_tests` against the project's actual test inventory (drops hallucinated tests); flag `inconclusive` verdicts in `notes` for human review. A pilot would measure the actual false-positive and false-negative rates and inform whether the AI is good enough.
+
 
 ### 9.2 Full-system scan token cost on very large projects
 - **Risk:** Medium.
@@ -341,7 +341,7 @@ For a **mature, 500-component codebase with cross-cutting changes**:
 | Verification loop time | −65 to −92% | −50 to −90% (wider range; depends on AI test-selection quality) | Medium (lower than the prior form) |
 | Overall AI-assisted maintenance productivity | +25 to +45% | +20 to +45% (lower bound reflects AI test-selection risk) | Low-medium |
 | One-time full-system scan cost | ~12.5M tokens, ~1.6 hours wall time (8-way parallel) | ~110M tokens, ~43 hours wall time (8-way parallel) — higher because per-candidate AI calls dominate. Unchanged from earlier form of this proposal. | High (arithmetic) |
-| Per-event single-component scan cost (new component via W6, or CI revalidation) | ~25–50k tokens, ~4 minutes wall time | ~150–300k tokens, ~4 minutes wall time — higher per event than V1, but no nightly test-inventory refresh cost. The same cost applies whether W2 creates a new MD or automatically replaces an existing one — there is one algorithm, no modes. | High (arithmetic) |
+| Per-event single-component scan cost (new component via W6, or CI revalidation) | ~25–50k tokens, ~4 minutes wall time | ~150–300k tokens, ~4 minutes wall time — higher per event than V1 | High (arithmetic) |
 | Per-edit W5 cost | ~30k tokens, ~15s wall time | ~15–150k tokens, ~5s–2 minutes wall time — W5 never invokes W2, but can invoke W4. | High (arithmetic) |
 | W4 cost per invocation | `O(E)` file reads, milliseconds, 0 tokens | `O(N² × L)` file reads + one hash-stamping write pass, seconds-to-minutes, 0 tokens. Higher in wall time, but still negligible next to LLM-driven workflows. The trade is drift-proofing: every `Affected By:` list is re-derived from scratch and every file's validation hash re-stamped every time. | High (arithmetic) |
 
