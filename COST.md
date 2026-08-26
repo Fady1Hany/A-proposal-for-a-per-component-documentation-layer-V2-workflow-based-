@@ -176,15 +176,6 @@ The writes are also bounded: at most N writes per W4 invocation (one per file), 
 
 **Confidence: High.** This is just I/O. The numbers above assume sequential 1ms-per-read file I/O; real filesystems and OS-level caches make typical numbers lower. For monorepo-scale projects (10000+ components), the W4 nested loop becomes seconds-to-minutes of wall time — still negligible next to the LLM-driven workflows (W1 alone is 43 hours for a 500-component project), but worth noting. An optional incremental mode (re-deriving only the `Affected By` lists of components whose `Affects` changed) is flagged as an open question in [`WORKFLOWS.md` §9](./WORKFLOWS.md).
 
-### 4.2 Why the nested loop instead of the diff
-
-The prior form of W4 took an edge-diff argument when invoked by W2 — only the files in the diff were touched. That was cheaper (`O(E)` instead of `O(N² × L)`), but it had two failure modes that the nested loop eliminates:
-
-1. **Drift in unrelated files.** If a human edited an `Affected By:` entry in a file outside the diff, or if a previous W4 run was interrupted mid-write, the diff mode would not correct the drift. The nested loop re-derives every `Affected By:` list every time, so drift is always corrected.
-2. **Caller complexity.** W1, W2, W5, and W6 all had to compute and pass the right edge-diff argument to W4. With the nested loop, callers just invoke W4 with the project root — one algorithm, one input, one output.
-
-The cost trade-off is favorable: at any project size where W4 is non-trivial (N > 1000), the LLM-driven workflows dominate total cost by 3–4 orders of magnitude. Adding seconds of file I/O is invisible next to hours of LLM API calls.
-
 ## 5. Edit Component Loop cost (Workflow 5)
 
 W5 has **one cost component**: the verify loop (the per-retry W3 fan-out with cancel-on-first-failure). Workflow 5 has no relation to Workflow 2 — it can invoke W4 .
@@ -339,22 +330,17 @@ These are not regressions; they are **costs shifted from static infrastructure (
 
 ## 11. Where this proposal can actively hurt
 
-### 11.1 Stale docs (with mitigation)
-- **Risk:** Medium — comparable to the prior form's, since both use the change-aware model. The improvement is that the validation group is now derived implicitly from `Affects ∪ Affected By`, removing a stored field that could itself drift.
-- **Reason:** The change-aware staleness model is more accurate than any time-based threshold, so stale docs are detected quickly. But if the CI staleness check is misconfigured, staleness can still slip through. In this proposal the validation group is implicit and always 1 hop (`Affects ∪ Affected By` by construction), so there is no separate depth configuration to misconfigure — one less failure mode than the prior form's explicit `validation_group` field.
-- **Mitigation:** The staleness check is run on a schedule (default: daily) and on every PR.
-
-### 11.2 AI test-selection quality
+### 11.1 AI test-selection quality
 - **Risk:** Medium-High (this is the new risk this proposal introduces).
-- **Reason:** If Workflow 3's AI cannot reliably select appropriate tests for a component, the relationships stored in the COMPONENT_*.md files will be incomplete (false negatives — edges missed because no test was selected to catch them) or noisy (false positives — edges recorded because a flaky test happened to fail in a way the AI couldn't distinguish from a real impact).
+- **Reason:** for example: If Workflow 3's AI cannot reliably select appropriate tests for a component, the relationships stored in the COMPONENT_*.md files will be incomplete (false negatives — edges missed because no test was selected to catch them) or noisy (false positives — edges recorded because a flaky test happened to fail in a way the AI couldn't distinguish from a real impact).
 - **Mitigation:** Re-dispatch when the first verdict is `affected` (catches some flaky-test false positives); cross-check `affected_tests` against the project's actual test inventory (drops hallucinated tests); flag `inconclusive` verdicts in `notes` for human review. A pilot would measure the actual false-positive and false-negative rates and inform whether the AI is good enough.
 
-### 11.3 Full-system scan token cost on very large projects
+### 11.2 Full-system scan token cost on very large projects
 - **Risk:** Medium.
 - **Reason:** A 2000-component project with a 15-second per-test time costs ~800M tokens for the full-system scan. This is not free.
 - **Mitigation:** The scan is parallelizable and resumable. Run it over a weekend. The cost is paid once. For projects above 2000 components, consider shrinking M (fewer mutations per component) or accepting partial coverage (skip components with low `Affected By` breadth).
 
-### 11.4 Over-trust
+### 11.3 Over-trust
 - **Risk:** Medium.
 - **Reason:** Agents tend to treat documented facts as ground truth. A confident doc that's slightly wrong is more dangerous than no doc at all.
 - **Mitigation:** Docs are derived from actual test behavior, not human memory, so they're less likely to be "slightly wrong." But mutation testing has its own failure modes (compile errors masking downstream impact, non-deterministic tests, AI test-selection gaps). The agent SHOULD treat `Affects` and `Affected By` as advisory, not authoritative.
