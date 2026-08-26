@@ -1,11 +1,5 @@
 # Contributing — Component Impact Discovery
 
-## Stage
-
-This repo is at the **proposal / RFC stage**. We are not building production tooling yet. The goal is to refine the spec, refine the workflow algorithms, gather counterexamples, and — if the ideas survive scrutiny — encourage someone to pilot the proposal on a real codebase.
-
-This proposal supersedes one earlier form (V1) previously published by the same author. The files at the repo root supersede it. The lifecycle expands from the prior form's four workflows to six: W1 is retained; W2 is the same mutation + test-all algorithm **minus the outer loop** — it works on exactly one component you hand it, tests every other component in the system, and writes the component's MD file, **automatically replacing** any existing MD under that component's name (no mode flags); W3 is repurposed from static test enumeration into AI-driven dynamic testing; W4 is repurposed into reverse-edge sync **plus validation-hash stamping** — always a full nested loop over every `COMPONENT_<name>.md` file in the project, no diff input, and the sole writer of the `last_validated` hash that the CI staleness check (a GitHub Action comparing the hash in each MD file against the latest commit on the owning component or its `Affects` / `Affected By` components) relies on; W5 (Edit Component Loop) formalizes what the prior form left to the orchestration layer and has **no relation to Workflow 2** .can invoke W4; W6 (Create New Component) wraps code generation with a W2 invocation (plus the W4 that W2 triggers).
-
 ## What we want
 
 - **Criticism** — especially "this workflow won't work because…" with a concrete reason. The six workflows in [`WORKFLOWS.md`](./WORKFLOWS.md) make strong claims about cost, reliability, and (in the case of Workflow 3) the reliability of AI-driven dynamic test selection, (in the case of Workflow 5) the cancel-on-first-failure semantics, and (in the case of Workflow 6) the reliability of LLM code generation on the first try; they deserve scrutiny.
@@ -30,19 +24,6 @@ This proposal supersedes one earlier form (V1) previously published by the same 
 3. PRs that change a workflow algorithm MUST update both [`WORKFLOWS.md`](./WORKFLOWS.md) and the cost model in [`COST.md`](./COST.md) if the change affects cost.
 4. Be honest about confidence levels. If you add a claim, label its source per [`SOURCES.md`](./SOURCES.md).
 
-## Migration from the prior form
-
-If you have a project documented in the prior form (V1) and want to migrate to this proposal:
-
-1. Run a migration script that:
-   - Drops `depends_on`, `used_by`, `change_impact`, `targeted_verification`, `validation_group` from each `COMPONENT_<name>.md`.
-   - Keeps `last_validated` as-is (data-compatible — it is already `{commit, date}`).
-   - Constructs `affects` from the components that appeared in the prior form's `change_impact` entries (manual prose and machine-generated entries alike).
-   - Leaves `affected_by` empty — populated by the first Workflow 4 run after migration.
-   - Adds an empty `provenance` field (to be populated by the first Workflow 1 or Workflow 2 run).
-   - Sets `spec_version` to `v0.1`.
-2. Run Workflow 1 (Full-System Scan) to fully regenerate the docs with the new semantics. The migration script's output is a valid doc, but it lacks the AI-driven testing signal — only Workflow 1 can produce that.
-3. Configure the staleness checker as a GitHub Action. From this point, the change-aware freshness model is in effect, with the validation group computed implicitly from `Affects ∪ Affected By`.
 
 ## Code of conduct
 
