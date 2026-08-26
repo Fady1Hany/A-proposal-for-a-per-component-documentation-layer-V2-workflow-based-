@@ -273,79 +273,64 @@ W6's expensive case is **codegen failure with retries**. If the LLM cannot produ
 
 This is the W6-specific analogue of W3's central empirical question: can current AI reliably produce a working new component from a creation prompt on the first try? If not, W6's value proposition (one-shot new-component creation + documentation) weakens, and the workflow becomes a multi-retry loop. Pilot data would measure this directly.
 
-## 7. Where this proposal costs MORE than the prior form (V1)
+## 7. Where the gains are large (carried over from the prior form, with updates)
 
-The proposal's costs are higher than the prior form's in two specific places:
-
-1. **Per-candidate token cost.** The prior form ran the project's existing test suite against the mutated component and observed which tests failed — no AI involvement per candidate. This proposal dispatches a Workflow 3 sub-agent per candidate, which makes an LLM call to select tests, runs them, and reports a verdict. The per-candidate cost is therefore higher — but the trade is that the proposal does not maintain a static test inventory, which the prior form did (and which itself had a maintenance cost via the prior form's nightly testing workflow).
-2. **AI test-selection reliability.** The prior form's `targeted_verification` list was deterministic; the runner just executed the named tests. This proposal's test selection is non-deterministic — the same candidate, same mutation, same baseline can yield different verdicts across runs. The mitigation (re-dispatch when the first verdict is `affected`) doubles the cost for edges that turn out to be stable; the trade is fewer false positives.
-
-These are not regressions; they are **costs shifted from static infrastructure (test inventory maintenance) to dynamic operation (per-candidate AI calls)**. The question is whether the trade is worth it. The argument: the prior form's static test inventory drifted every time a developer added a test, and the drift was invisible (the inventory file looked current even when its contents were stale). This proposal's per-candidate cost is paid every scan, but the result is always against the current state of the codebase. There is no drift; there is only the question of whether the AI reliably selects the right tests, which is empirically answerable.
-
-## 8. Where this proposal costs LESS than the prior form (V1)
-
-1. **No test inventory maintenance.** The prior form's project-level testing workflow ran nightly to refresh `test_inventory.json` — a constant background token cost. This proposal has no static test inventory; the cost is paid only when a scan runs.
-2. **No `validation_group` field maintenance.** The prior form stored a separate `validation_group` field per component; this proposal derives it implicitly from `Affects ∪ Affected By`. The schema is smaller, the doc is smaller, the context budget spent reading the doc is smaller.
-3. **Smaller doc schema overall.** The prior form had 9 fields; this proposal has 6. The agent reads less per component, and the workflow writes less per scan.
-
-## 9. Where the gains are large (carried over from the prior form, with updates)
-
-### 9.1 Cross-file refactors and changes with downstream consumers
+### 7.1 Cross-file refactors and changes with downstream consumers
 - **Estimated improvement:** failed/broken-edit rate drops 50–80% on changes with ≥3 downstream consumers.
 - **Confidence:** Medium.
 - **Reasoning:** `Affects` is derived from mutation testing rather than human memory, so it's more accurate than the prior form. The 50–80% range should hold or improve.
 - **Baseline problem:** AI coding agents have measurably higher failure rates on cross-file changes than on localized changes. Vendor-cited data (riftmap.dev, citing DORA/Cortex) puts the gap around 30%, but see [`SOURCES.md`](./SOURCES.md) for caveats.
 
-### 9.2 Navigation cost on large codebases
+### 7.2 Navigation cost on large codebases
 - **Estimated improvement:** context budget saved on navigation is 40–70% for codebases above ~200 components.
 - **Confidence:** Medium-high.
 - **Reasoning:** Same arithmetic as the prior form. The doc is smaller (6 fields vs 9), so per-doc navigation cost is lower; the relationships stored in the COMPONENT_*.md files are more accurate (behavioral, not structural), so per-task navigation hits are fewer.
 
-### 9.3 Test selection
+### 7.3 Test selection
 - **Estimated improvement:** verification loop time drops 60–90% for changes where Workflow 3's dynamic selection produces accurate verdicts.
 - **Confidence:** Medium (lower than the prior form's Medium-high, because the assumption that AI can reliably select tests is novel and unmeasured).
 - **Reasoning:** The accuracy bar is "does the AI select the right tests" rather than "does the static inventory match the test suite." If the AI's selection is good, the verification loop is faster (only relevant tests run); if it's bad, the loop is longer (re-dispatches to confirm `affected` verdicts). The net is a function of AI quality, which is what a pilot would measure.
 
-## 10. Where the gains are small or zero (carried over from the prior form)
+## 8. Where the gains are small or zero (carried over from the prior form)
 
-### 10.1 Single-file, self-contained changes
+### 8.1 Single-file, self-contained changes
 - **Estimated improvement:** 0–20%. Possibly net-negative due to doc-reading overhead.
 - **Confidence:** High.
 - **Reason:** If the change doesn't touch anything else, the doc adds overhead for zero benefit.
 
-### 10.2 Small codebases (<50 components)
+### 8.2 Small codebases (<50 components)
 - **Estimated improvement:** negligible.
 - **Confidence:** High.
 - **Reason:** The agent can grep the whole thing in one pass. The map's value is marginal. Additionally, full-system scan cost for small projects is low enough that the cost-benefit is unclear — the proposal's value proposition scales with project size.
 
-### 10.3 Well-typed, well-named code
+### 8.3 Well-typed, well-named code
 - **Estimated improvement:** smaller than for dynamic or legacy code.
 - **Confidence:** Medium.
 - **Reason:** Strong type systems (TypeScript, Rust, Haskell) already encode much of the structural dependency for free. The proposal still adds value (behavioral impact that types don't capture), but less than for dynamic languages.
 
-### 10.4 Greenfield work
+### 8.4 Greenfield work
 - **Estimated improvement:** near zero.
 - **Confidence:** High.
 - **Reason:** No history, no implicit knowledge to surface. The doc is mostly empty. Scan cost is low (few components), but so is the benefit.
 
-## 11. Where this proposal can actively hurt
+## 9. Where this proposal can actively hurt
 
-### 11.1 AI test-selection quality
+### 9.1 AI test-selection quality
 - **Risk:** Medium-High (this is the new risk this proposal introduces).
 - **Reason:** for example: If Workflow 3's AI cannot reliably select appropriate tests for a component, the relationships stored in the COMPONENT_*.md files will be incomplete (false negatives — edges missed because no test was selected to catch them) or noisy (false positives — edges recorded because a flaky test happened to fail in a way the AI couldn't distinguish from a real impact).
 - **Mitigation:** Re-dispatch when the first verdict is `affected` (catches some flaky-test false positives); cross-check `affected_tests` against the project's actual test inventory (drops hallucinated tests); flag `inconclusive` verdicts in `notes` for human review. A pilot would measure the actual false-positive and false-negative rates and inform whether the AI is good enough.
 
-### 11.2 Full-system scan token cost on very large projects
+### 9.2 Full-system scan token cost on very large projects
 - **Risk:** Medium.
 - **Reason:** A 2000-component project with a 15-second per-test time costs ~800M tokens for the full-system scan. This is not free.
 - **Mitigation:** The scan is parallelizable and resumable. Run it over a weekend. The cost is paid once. For projects above 2000 components, consider shrinking M (fewer mutations per component) or accepting partial coverage (skip components with low `Affected By` breadth).
 
-### 11.3 Over-trust
+### 9.3 Over-trust
 - **Risk:** Medium.
 - **Reason:** Agents tend to treat documented facts as ground truth. A confident doc that's slightly wrong is more dangerous than no doc at all.
 - **Mitigation:** Docs are derived from actual test behavior, not human memory, so they're less likely to be "slightly wrong." But mutation testing has its own failure modes (compile errors masking downstream impact, non-deterministic tests, AI test-selection gaps). The agent SHOULD treat `Affects` and `Affected By` as advisory, not authoritative.
 
-## 12. Bottom line
+## 10. Bottom line
 
 For a **mature, 500-component codebase with cross-cutting changes**:
 
@@ -362,13 +347,13 @@ For a **mature, 500-component codebase with cross-cutting changes**:
 
 For a **small or clean codebase**, expect single-digit improvements at best, and possible net-negative if the doc overhead exceeds the gains. The proposal's value proposition scales with project size and component interconnection.
 
-## 13. What this is not
+## 11. What this is not
 
 - **Not a multiplier on AI intelligence.** The agent does not get smarter. This proposal stops the agent from making two specific mistakes: missed downstream consumers and wrong test selection.
 - **Not a substitute for source inspection.** The agent should still read the actual code before editing.
 - **Not a benchmark.** These are hypotheses. Anyone piloting this proposal should instrument before/after metrics on their own codebase.
 
-## 14. Recommended pilot
+## 12. Recommended pilot
 
 If you want to validate these numbers:
 
