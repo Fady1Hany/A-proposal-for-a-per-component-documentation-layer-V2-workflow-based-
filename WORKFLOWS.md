@@ -32,17 +32,19 @@ flowchart TB
     W5[W5: Edit Component Loop]
     W6[W6: Create New Component]
 
-    W1 -- "per component, dispatch testing tasks" --> W3
-    W2 -- "for one component, dispatch testing tasks" --> W3
-    W5 -- "per Affects-list entry, dispatch testing tasks" --> W3
-    W6 -- "generate code, then invoke W2" --> W2
-    W1 -- "after the scan completes" --> W4
-    W2 -- "after the component's Affects list is written (always)" --> W4
-    W1 -.produces.-> Docs1[Affects lists across the project]
-    W2 -.produces.-> Docs2[Affects list for one component]
-    W4 -.updates.-> Reverse[Affected By lists + validation hashes across the project]
-    W5 -.reads.-> Docs1
-    W5 -.reads.-> Docs2
+    W1 -->|per component dispatch testing tasks| W3
+    W2 -->|for one component dispatch testing tasks| W3
+    W5 -->|per Affects list entry dispatch testing tasks| W3
+    W6 -->|generate code then invoke W2| W2
+
+    W1 -->|after the scan completes| W4
+    W2 -->|after the Affects list is written always| W4
+
+    W1 -.->|produces| Docs1[Affects lists across the project]
+    W2 -.->|produces| Docs2[Affects list for one component]
+    W4 -.->|updates| Reverse[Affected By lists and validation hashes across the project]
+    W5 -.->|reads| Docs1
+    W5 -.->|reads| Docs2
 ```
 
 Workflows 1 and 2 are the primary discovery loops. They run the same mutation + test-all algorithm; the only difference is the outer loop: Workflow 1 wraps the algorithm in an outer loop over every component in the project, while Workflow 2 has no outer loop and runs it on the single component you hand it. Workflow 2 mutates that component, tests every other component in the system, and writes its MD — automatically replacing an existing `COMPONENT_<NAME>.md` if one exists under that name, or creating a new one if not. Workflow 3 is the testing engine they hand off to. Workflow 4 is the bookkeeping step that keeps the relationships stored in the COMPONENT_*.md files consistent in both directions, and it is the workflow responsible for stamping the validation hash into the MD file of every component. Workflow 5 is the runtime edit-and-verify loop that *consumes* the relationships stored in the COMPONENT_*.md files — it reads the Affects list, applies the edit, and verifies via Workflow 3; it has **no relation to Workflow 2** and never invokes it. Workflow 6 wraps code generation with W2 + W4 (W2 triggers W4 internally) so that new components are documented as soon as they're written.
