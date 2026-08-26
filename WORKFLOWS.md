@@ -439,7 +439,9 @@ The AI then executes the selected tests (or dispatches them to the project's tes
 The important idea is that **the AI determines the appropriate tests dynamically**. The system therefore does not need to maintain a static list of test names inside every component's Markdown file. The AI's current capabilities are expected to allow it to determine the relevant tests for a component regardless of whether the component is small or large.
 
 
-The workflow (W3) can also be implemented by running static tests for testing the component_under_test. These tests are documented in `Component_component_under_test.md` under the `notes` field (section); however, this is an exception.
+The workflow (W3) can also be implemented by running static tests for testing the component_under_test. These tests are documented in `Component_component_under_test.md` under the `notes` field (section); however, this is an exception. and if you will use the `notes` field to write static tests you can use it for that **under one condition** : any test in any `COMPONENT_<name>.md` must cover ( test ) **only** the Component whose name  matches the `<name>` part of that `COMPONENT_<name>.md` filename and must not cover any components related to it
+  
+  
 
 ### 3.3 Inputs
 
