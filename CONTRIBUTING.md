@@ -15,7 +15,6 @@
 - **Tools before the spec is stable.** Tools lock in decisions. The spec is `v0.1`; a `1.0` release would follow a successful pilot.
 - **Marketing language.** This is a proposal, not a product.
 - **Over-engineering.** If a field doesn't directly serve the agent's navigation or verification needs, or if a workflow step doesn't directly serve impact discovery or reverse-edge sync, it probably doesn't belong.
-- **Conflating the prior form with this proposal.** The two are different proposals. If you want to discuss the prior form (V1), refer to its published description; if you want to discuss this proposal (six workflows, Affects/Affected-By only), use the root files. Don't propose changes that mix the two without being explicit about the migration path.
 
 ## How to contribute
 
